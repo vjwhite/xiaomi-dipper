@@ -3,7 +3,7 @@ deviceinfo_manufacturer="Xiaomi"
 deviceinfo_codename="dipper"
 deviceinfo_arch="aarch64"
 deviceinfo_halium_version="9"
-deviceinfo_ubuntu_touch_release="24.04-2.x"
+deviceinfo_ubuntu_touch_release="24.04-1.x"
 deviceinfo_system_partition_size="3072M"
 deviceinfo_rootfs_image_sector_size="4096"
 
