@@ -29,12 +29,21 @@ jobs:
           rm -rf workdir
           df -h .
 
-      - name: Build system image for the 3 GiB system partition
+      - name: Build rootfs image for userdata
         run: |
+          df -h .
           ./build/prepare-fake-ota.sh out/device_dipper.tar.xz ota
           ./build/system-image-from-ota.sh ota/ubuntu_command out
+          rm -f out/system.img
+          e2fsck -fy out/rootfs.img
+          resize2fs -M out/rootfs.img
+          resize2fs out/rootfs.img +1024M
+          blocks=$(dumpe2fs -h out/rootfs.img | awk '/Block count:/ {print $3}')
+          bsize=$(dumpe2fs -h out/rootfs.img | awk '/Block size:/ {print $3}')
+          truncate -s $((blocks * bsize)) out/rootfs.img
+          ls -lh out/boot.img out/rootfs.img
           test "$(stat -c%s out/boot.img)" -lt 67108864
-          test "$(stat -c%s out/rootfs.img)" -le 3221225472
+          test "$(stat -c%s out/rootfs.img)" -lt 8589934592
 
       - name: Upload flashable images
         uses: actions/upload-artifact@v4
@@ -42,5 +51,4 @@ jobs:
           name: dipper-24.04-images
           path: |
             out/boot.img
-            out/system.img
             out/rootfs.img

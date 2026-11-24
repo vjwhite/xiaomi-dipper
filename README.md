@@ -1,6 +1,6 @@
 # Ubuntu Touch 24.04 для Xiaomi Mi 8 (dipper)
 
-Порт Halium 9. Ядро остаётся ветка `halium-9.0` из `kernel-xiaomi-sdm845`, собирается GCC 4.9. Корень системы — Ubuntu Touch 24.04-1.x: выпуск 24.04-2.x не помещается в раздел `system` на 3 ГиБ.
+Порт Halium 9. Ядро остаётся ветка `halium-9.0` из `kernel-xiaomi-sdm845`, собирается GCC 4.9. Корень — Ubuntu Touch 24.04-1.x. Раздел `system` на этом аппарате ровно 3 ГиБ, и туда не влезает ни 24.04-2.x, ни 24.04-1.x. Образ кладётся файлом `ubuntu.img` на userdata, там около 50 ГиБ. Параметра `systempart` в командной строке ядра нет: иначе initramfs игнорирует файл и монтирует тесный раздел.
 
 TWRP уже стоит в разделе recovery. Эта сборка его не заменяет и не трогает vendor Android 9.
 
@@ -8,10 +8,10 @@ TWRP уже стоит в разделе recovery. Эта сборка его н
 
 Из артефакта CI нужны два файла:
 
-- `boot.img` — ядро и initramfs, меньше 64 МиБ
-- `system.img` — разреженный образ корня, сырой `rootfs.img` не больше 3221225472 байт
+- `boot.img` — ядро и initramfs, меньше 64 МиБ, прошивается в раздел Boot
+- `rootfs.img` — файл корня, на телефоне он должен называться `/data/ubuntu.img`
 
-Vendor и Recovery не прошивать.
+Разделы System, Vendor и Recovery не прошивать.
 
 ## Сборка
 
@@ -32,8 +32,8 @@ GitHub Actions по пушу в `main` выполняет `build.sh`, затем
 1. Пока телефон ещё загружен в 16.04, скопировать нужные файлы из `/home/phablet`.
 2. Перезагрузиться в TWRP. С компьютера снять копии разделов `boot`, `system`, `recovery` и `vendor`.
 3. Wipe → Format Data → `yes`, затем снова загрузка в TWRP. Файлы на userdata после этого стёрты.
-4. `adb push boot.img /tmp` и `adb push system.img /tmp`.
-5. Install → Install Image: `boot.img` в Boot, `system.img` в System.
+4. `adb push boot.img /tmp` и `adb push rootfs.img /data/ubuntu.img`.
+5. Install → Install Image: только `boot.img` в Boot.
 6. Reboot System. TWRP остаётся в recovery.
 
 ## Оверлей

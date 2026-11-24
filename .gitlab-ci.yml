@@ -13,10 +13,14 @@ system-image:
     - git clone --depth 1 https://gitlab.com/ubports/porting/community-ports/halium-generic-adaptation-build-tools.git build
     - ./build/prepare-fake-ota.sh out/device_dipper.tar.xz ota
     - ./build/system-image-from-ota.sh ota/ubuntu_command out
+    - rm -f out/system.img
+    - e2fsck -fy out/rootfs.img
+    - resize2fs -M out/rootfs.img
+    - resize2fs out/rootfs.img +1024M
+    - truncate -s $(($(dumpe2fs -h out/rootfs.img | awk '/Block count:/ {print $3}') * $(dumpe2fs -h out/rootfs.img | awk '/Block size:/ {print $3}'))) out/rootfs.img
     - test "$(stat -c%s out/boot.img)" -lt 67108864
-    - test "$(stat -c%s out/rootfs.img)" -le 3221225472
+    - test "$(stat -c%s out/rootfs.img)" -lt 8589934592
   artifacts:
     paths:
       - out/boot.img
-      - out/system.img
       - out/rootfs.img
