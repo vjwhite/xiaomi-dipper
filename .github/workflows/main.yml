@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  images:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build kernel and device tarball
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            bc bison build-essential ca-certificates cpio curl \
+            android-sdk-libsparse-utils e2fsprogs fakeroot flex git jq kmod \
+            libelf-dev libssl-dev libtinfo5 lz4 python3 python-is-python3 \
+            sudo unzip wget xz-utils pahole libbpf-dev
+          chmod +x build.sh \
+            overlay/system/usr/libexec/lxc-android-config/device-hacks \
+            overlay/system/usr/bin/uinput-fpc-key-disable \
+            overlay/system/usr/bin/uinput-goodix-key-disable
+          ./build.sh
+          rm -rf workdir
+          df -h .
+
+      - name: Build system image for the 3 GiB system partition
+        run: |
+          ./build/prepare-fake-ota.sh out/device_dipper.tar.xz ota
+          ./build/system-image-from-ota.sh ota/ubuntu_command out
+          test "$(stat -c%s out/boot.img)" -lt 67108864
+          test "$(stat -c%s out/rootfs.img)" -le 3221225472
+
+      - name: Upload flashable images
+        uses: actions/upload-artifact@v4
+        with:
+          name: dipper-24.04-images
+          path: |
+            out/boot.img
+            out/system.img
+            out/rootfs.img

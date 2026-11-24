@@ -1,0 +1,22 @@
+include:
+  - https://gitlab.com/ubports/porting/community-ports/halium-generic-adaptation-build-tools/-/raw/main/gsi-port-ci.yml
+
+# dipper is not published on the 20.04 system-image channel, so the shared
+# "flashable" job cannot fetch an OTA for it. Build system.img from the
+# generic 24.04 rootfs plus this device tarball instead.
+system-image:
+  stage: deploy
+  needs: ["build"]
+  script:
+    - apt-get update
+    - apt-get install -y --no-install-recommends android-sdk-libsparse-utils e2fsprogs fakeroot git jq sudo wget xz-utils
+    - git clone --depth 1 https://gitlab.com/ubports/porting/community-ports/halium-generic-adaptation-build-tools.git build
+    - ./build/prepare-fake-ota.sh out/device_dipper.tar.xz ota
+    - ./build/system-image-from-ota.sh ota/ubuntu_command out
+    - test "$(stat -c%s out/boot.img)" -lt 67108864
+    - test "$(stat -c%s out/rootfs.img)" -le 3221225472
+  artifacts:
+    paths:
+      - out/boot.img
+      - out/system.img
+      - out/rootfs.img

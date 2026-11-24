@@ -1,0 +1,37 @@
+#!/bin/sh
+# Runs after the Android container is up. Replaces the Xenial Upstart jobs.
+
+mkdir -p /dev/cpuset
+mountpoint -q /dev/cpuset || mount -t cpuset -o nodev,noexec,nosuid none /dev/cpuset || true
+
+# The cache partition is 256 MiB, so system-image updates live on userdata.
+if mountpoint -q /android/cache; then
+    umount /android/cache || true
+fi
+mkdir -p /userdata/cache /android/cache/recovery
+mountpoint -q /android/cache || mount -o bind /userdata/cache /android/cache || true
+
+if [ -d /android/metadata ]; then
+    mkdir -p /var/lib/lxc/android/rootfs/metadata
+    mountpoint -q /var/lib/lxc/android/rootfs/metadata || \
+        mount -o bind /android/metadata /var/lib/lxc/android/rootfs/metadata || true
+fi
+
+if [ -e /dev/ipa ]; then
+    i=0
+    while ! mountpoint -q /vendor; do
+        i=$((i + 1))
+        [ "$i" -ge 30 ] && break
+        sleep 1
+    done
+    if [ -f /vendor/firmware/ipa_fws.mdt ]; then
+        echo 1 > /dev/ipa || true
+    fi
+fi
+
+if [ -x /usr/bin/uinput-fpc-key-disable ]; then
+    ( while true; do /usr/bin/uinput-fpc-key-disable || true; sleep 2; done ) >/dev/null 2>&1 &
+fi
+if [ -x /usr/bin/uinput-goodix-key-disable ]; then
+    ( while true; do /usr/bin/uinput-goodix-key-disable || true; sleep 2; done ) >/dev/null 2>&1 &
+fi
