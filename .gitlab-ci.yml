@@ -16,7 +16,7 @@ system-image:
     - rm -f out/system.img
     - e2fsck -fy out/rootfs.img
     - resize2fs -M out/rootfs.img
-    - resize2fs out/rootfs.img +1024M
+    - resize2fs out/rootfs.img $$(($$(dumpe2fs -h out/rootfs.img | awk '/Block count:/ {print $$3}') + 262144))
     - truncate -s $(($(dumpe2fs -h out/rootfs.img | awk '/Block count:/ {print $3}') * $(dumpe2fs -h out/rootfs.img | awk '/Block size:/ {print $3}'))) out/rootfs.img
     - test "$(stat -c%s out/boot.img)" -lt 67108864
     - test "$(stat -c%s out/rootfs.img)" -lt 8589934592

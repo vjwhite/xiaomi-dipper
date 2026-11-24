@@ -37,7 +37,8 @@ jobs:
           rm -f out/system.img
           e2fsck -fy out/rootfs.img
           resize2fs -M out/rootfs.img
-          resize2fs out/rootfs.img +1024M
+          min_blocks=$(dumpe2fs -h out/rootfs.img | awk '/Block count:/ {print $3}')
+          resize2fs out/rootfs.img $((min_blocks + 262144))
           blocks=$(dumpe2fs -h out/rootfs.img | awk '/Block count:/ {print $3}')
           bsize=$(dumpe2fs -h out/rootfs.img | awk '/Block size:/ {print $3}')
           truncate -s $((blocks * bsize)) out/rootfs.img
